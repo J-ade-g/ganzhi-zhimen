@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感知之门 - 自然探索应用</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 用户信息收集界面 -->
+        <div id="userInfoForm" class="card">
+            <h1>🌿 感知之门</h1>
+            <h2>个人信息收集</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label>年龄：</label>
+                    <input type="number" id="age" min="1" max="120" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>当前居住地：</label>
+                    <select id="location" required>
+                        <option value="">请选择</option>
+                        <option value="城市">城市</option>
+                        <option value="乡村">乡村</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>成长环境：</label>
+                    <select id="growthEnv" required>
+                        <option value="">请选择</option>
+                        <option value="城市">城市</option>
+                        <option value="乡村">乡村</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>自然接触频率：</label>
+                    <select id="contactFreq" required>
+                        <option value="">请选择</option>
+                        <option value="每天">每天</option>
+                        <option value="每周">每周</option>
+                        <option value="每月">每月</option>
+                        <option value="很少">很少</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>兴趣标签（可多选）：</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="观鸟"> 观鸟</label>
+                        <label><input type="checkbox" value="植物识别"> 植物识别</label>
+                        <label><input type="checkbox" value="地质"> 地质</label>
+                        <label><input type="checkbox" value="农耕文化"> 农耕文化</label>
+                        <label><input type="checkbox" value="摄影"> 摄影</label>
+                        <label><input type="checkbox" value="徒步"> 徒步</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">开始探索之旅</button>
+            </form>
+        </div>
+
+        <!-- 主应用界面 -->
+        <div id="mainApp" class="card" style="display: none;">
+            <h1>🌿 感知之门</h1>
+            <div id="userWelcome"></div>
+            
+            <div class="task-section">
+                <h2>今日探索任务</h2>
+                <div id="taskCard" class="task-card">
+                    <div id="taskContent">正在为您生成个性化任务...</div>
+                    <div class="task-actions">
+                        <button id="startTask" class="task-btn">开始任务</button>
+                        <button id="changeTask" class="change-btn">换一换</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记录界面 -->
+        <div id="recordInterface" class="card" style="display: none;">
+            <h2>📝 记录你的感知体验</h2>
+            <div id="currentTask"></div>
+            
+            <div class="record-form">
+                <div class="form-group">
+                    <label>文字记录：</label>
+                    <textarea id="textRecord" placeholder="描述你的体验、感受、观察到的细节..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>感官体验：</label>
+                    <div class="sensory-inputs">
+                        <input type="text" id="visual" placeholder="视觉感受（看到了什么？）">
+                        <input type="text" id="auditory" placeholder="听觉感受（听到了什么？）">
+                        <input type="text" id="tactile" placeholder="触觉感受（摸起来如何？）">
+                        <input type="text" id="olfactory" placeholder="嗅觉感受（闻到了什么？）">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>上传图片：</label>
+                    <input type="file" id="imageUpload" accept="image/*" multiple>
+                </div>
+                
+                <div class="record-actions">
+                    <button id="saveRecord" class="submit-btn">保存记录</button>
+                    <button id="backToMain" class="back-btn">返回主页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
