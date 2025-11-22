@@ -8,10 +8,60 @@
 </head>
 <body>
     <div class="container">
+        <!-- 登录/注册界面 -->
+        <div id="authForm" class="card">
+            <h1>🌿 感知之门</h1>
+            <h2 id="authTitle">用户登录</h2>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">登录</button>
+                <button class="auth-tab" data-tab="register">注册</button>
+            </div>
+            
+            <!-- 登录表单 -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label>用户名或邮箱：</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>密码：</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">登录</button>
+            </form>
+            
+            <!-- 注册表单 -->
+            <form id="registerForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label>用户名：</label>
+                    <input type="text" id="registerUsername" required minlength="3">
+                    <small>至少3个字符</small>
+                </div>
+                <div class="form-group">
+                    <label>邮箱：</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>密码：</label>
+                    <input type="password" id="registerPassword" required minlength="6">
+                    <small>至少6个字符</small>
+                </div>
+                <div class="form-group">
+                    <label>确认密码：</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">注册</button>
+            </form>
+        </div>
+
         <!-- 用户信息收集界面 -->
-        <div id="userInfoForm" class="card">
+        <div id="userInfoForm" class="card" style="display: none;">
             <h1>🌿 感知之门</h1>
             <h2>个人信息收集</h2>
+            <p style="text-align: center; color: #6c757d; margin-bottom: 2rem;">
+                欢迎 <strong id="welcomeUsername"></strong>！请完善你的个人信息以获得更好的体验。
+            </p>
             <form id="userForm">
                 <div class="form-group">
                     <label>年龄：</label>
@@ -19,20 +69,62 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>当前居住地：</label>
-                    <select id="location" required>
+                    <label>性别：</label>
+                    <select id="gender" required>
                         <option value="">请选择</option>
-                        <option value="城市">城市</option>
-                        <option value="乡村">乡村</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                        <option value="其他">其他</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label>成长环境：</label>
+                    <label>当前居住地类型：</label>
+                    <select id="location" required>
+                        <option value="">请选择</option>
+                        <option value="大城市中心">大城市中心</option>
+                        <option value="城市郊区">城市郊区</option>
+                        <option value="小城镇">小城镇</option>
+                        <option value="乡村">乡村</option>
+                        <option value="山区">山区</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>居住地绿色含量：</label>
+                    <select id="greenLevel" required>
+                        <option value="">请选择</option>
+                        <option value="很少绿色">很少绿色（主要是建筑和道路）</option>
+                        <option value="少量绿色">少量绿色（偶尔有公园或行道树）</option>
+                        <option value="适中绿色">适中绿色（有较多公园和绿化）</option>
+                        <option value="丰富绿色">丰富绿色（绿化覆盖率高）</option>
+                        <option value="自然环境">自然环境（被自然包围）</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>常见地貌：</label>
+                    <select id="terrain" required>
+                        <option value="">请选择</option>
+                        <option value="平原">平原</option>
+                        <option value="丘陵">丘陵</option>
+                        <option value="山地">山地</option>
+                        <option value="高原">高原</option>
+                        <option value="盆地">盆地</option>
+                        <option value="沿海">沿海</option>
+                        <option value="河流湖泊">河流湖泊</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>成长环境类型：</label>
                     <select id="growthEnv" required>
                         <option value="">请选择</option>
-                        <option value="城市">城市</option>
+                        <option value="大城市中心">大城市中心</option>
+                        <option value="城市郊区">城市郊区</option>
+                        <option value="小城镇">小城镇</option>
                         <option value="乡村">乡村</option>
+                        <option value="山区">山区</option>
                     </select>
                 </div>
                 
@@ -66,16 +158,18 @@
         <!-- 主应用界面 -->
         <div id="mainApp" class="card" style="display: none;">
             <h1>🌿 感知之门</h1>
-            <div id="userWelcome"></div>
+            <div id="userWelcome">
+                <div id="userInfo"></div>
+                <div class="user-stats" id="userStats"></div>
+            </div>
             
             <div class="task-section">
-                <h2>今日探索任务</h2>
-                <div id="taskCard" class="task-card">
-                    <div id="taskContent">正在为您生成个性化任务...</div>
-                    <div class="task-actions">
-                        <button id="startTask" class="task-btn">开始任务</button>
-                        <button id="changeTask" class="change-btn">换一换</button>
-                    </div>
+                <div id="tasksContainer" class="tasks-grid">
+                    <!-- 动态生成的任务选项 -->
+                </div>
+                <div class="task-actions">
+                    <button id="refreshTasks" class="change-btn">刷新感知之门</button>
+                    <button id="viewRecords" class="back-btn">我的</button>
                 </div>
             </div>
         </div>
@@ -103,13 +197,68 @@
                 
                 <div class="form-group">
                     <label>上传图片：</label>
-                    <input type="file" id="imageUpload" accept="image/*" multiple>
+                    <div class="image-upload-controls">
+                        <input type="file" id="imageUpload" accept="image/*" multiple capture="environment">
+                        <button type="button" id="cameraBtn" class="task-btn">📷 拍照</button>
+                    </div>
+                    <div id="imagePreview"></div>
+                    <video id="cameraPreview" style="display: none; width: 100%; max-width: 300px; border-radius: 8px;"></video>
+                    <canvas id="photoCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="form-group">
+                    <label>录音记录：</label>
+                    <div class="recording-controls">
+                        <button id="startRecording" class="task-btn">开始录音</button>
+                        <button id="pauseRecording" class="change-btn" style="display: none;">暂停录音</button>
+                        <button id="resumeRecording" class="change-btn" style="display: none;">继续录音</button>
+                        <button id="stopRecording" class="back-btn" style="display: none;">停止录音</button>
+                        <div id="recordingTimer" style="display: none; margin: 10px 0; font-weight: bold; color: #dc3545;">
+                            🔴 录音中... <span id="timerDisplay">00:00</span>
+                        </div>
+                    </div>
+                    <div id="audioPreview"></div>
                 </div>
                 
                 <div class="record-actions">
                     <button id="saveRecord" class="submit-btn">保存记录</button>
                     <button id="backToMain" class="back-btn">返回主页</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- 记录查看界面 -->
+        <div id="recordsView" class="card" style="display: none;">
+            <h2>🗂️ 我的</h2>
+            
+            <div class="records-nav">
+                <button class="nav-btn active" data-view="profile">👤 个人信息</button>
+                <button class="nav-btn" data-view="calendar">📅 按日历</button>
+                <button class="nav-btn" data-view="text">📝 全部文字</button>
+                <button class="nav-btn" data-view="images">🖼️ 全部图片</button>
+                <button class="nav-btn" data-view="audio">🎵 全部录音</button>
+            </div>
+            
+            <div class="records-content">
+                <div id="profileView" class="record-view active">
+                    <!-- 个人信息编辑 -->
+                </div>
+                <div id="calendarView" class="record-view" style="display: none;">
+                    <!-- 日历视图内容 -->
+                </div>
+                <div id="textView" class="record-view" style="display: none;">
+                    <!-- 文字记录内容 -->
+                </div>
+                <div id="imagesView" class="record-view" style="display: none;">
+                    <!-- 图片库内容 -->
+                </div>
+                <div id="audioView" class="record-view" style="display: none;">
+                    <!-- 录音库内容 -->
+                </div>
+            </div>
+            
+            <div class="record-actions">
+                <button id="backToMainFromRecords" class="back-btn">返回主页</button>
             </div>
         </div>
     </div>

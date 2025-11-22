@@ -2,9 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const db = require('./database');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 // 中间件
 app.use(cors());
@@ -53,23 +54,48 @@ function writeJSONFile(filePath, data) {
 
 // API 路由
 
-// 保存用户信息
-app.post('/api/users', (req, res) => {
+// 用户注册
+app.post('/api/auth/register', (req, res) => {
   try {
     const userData = req.body;
-    userData.id = Date.now().toString();
-    userData.createdAt = new Date().toISOString();
     
-    const users = readJSONFile(USERS_FILE);
-    users.push(userData);
+    // 检查用户是否已存在
+    const existingUser = db.findUser({ username: userData.username, email: userData.email });
+    if (existingUser) {
+      return res.status(400).json({ error: '用户名或邮箱已存在' });
+    }
     
-    if (writeJSONFile(USERS_FILE, users)) {
-      res.json({ success: true, userId: userData.id });
+    const newUser = db.addUser(userData);
+    res.json({ success: true, user: { id: newUser.id, username: newUser.username, email: newUser.email } });
+  } catch (error) {
+    res.status(500).json({ error: '注册失败' });
+  }
+});
+
+// 用户登录
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    const user = db.findUser({ username, email: username });
+    if (user && user.password === password) {
+      res.json({ success: true, user: { id: user.id, username: user.username, email: user.email } });
     } else {
-      res.status(500).json({ error: '保存用户信息失败' });
+      res.status(401).json({ error: '用户名或密码错误' });
     }
   } catch (error) {
-    res.status(500).json({ error: '服务器错误' });
+    res.status(500).json({ error: '登录失败' });
+  }
+});
+
+// 保存用户资料
+app.post('/api/users/profile', (req, res) => {
+  try {
+    const profileData = req.body;
+    const savedProfile = db.saveProfile(profileData);
+    res.json({ success: true, profile: savedProfile });
+  } catch (error) {
+    res.status(500).json({ error: '保存用户资料失败' });
   }
 });
 
@@ -91,16 +117,10 @@ app.post('/api/records', (req, res) => {
     recordData.id = Date.now().toString();
     recordData.createdAt = new Date().toISOString();
     
-    const records = readJSONFile(RECORDS_FILE);
-    records.push(recordData);
-    
-    if (writeJSONFile(RECORDS_FILE, records)) {
-      res.json({ success: true, recordId: recordData.id });
-    } else {
-      res.status(500).json({ error: '保存记录失败' });
-    }
+    const savedRecord = db.addRecord(recordData);
+    res.json({ success: true, record: savedRecord });
   } catch (error) {
-    res.status(500).json({ error: '服务器错误' });
+    res.status(500).json({ error: '保存记录失败' });
   }
 });
 
@@ -139,6 +159,52 @@ app.get('/api/stats/:userId', (req, res) => {
   } catch (error) {
     res.status(500).json({ error: '获取统计数据失败' });
   }
+});
+
+// 管理员API - 获取所有用户数据
+app.get('/api/admin/users', (req, res) => {
+  try {
+    const users = db.getAllUsers();
+    const profiles = db.profiles;
+    
+    // 合并用户信息和资料
+    const usersWithProfiles = users.map(user => {
+      const profile = profiles.find(p => p.userId === user.id);
+      return {
+        ...user,
+        profile: profile || null
+      };
+    });
+    
+    res.json(usersWithProfiles);
+  } catch (error) {
+    res.status(500).json({ error: '获取用户数据失败' });
+  }
+});
+
+// 管理员API - 获取所有记录数据
+app.get('/api/admin/records', (req, res) => {
+  try {
+    const records = db.getAllRecords();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ error: '获取记录数据失败' });
+  }
+});
+
+// 管理员API - 获取统计数据
+app.get('/api/admin/stats', (req, res) => {
+  try {
+    const stats = db.getStats();
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: '获取统计数据失败' });
+  }
+});
+
+// 管理员后台页面
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // 任务生成逻辑
@@ -214,6 +280,9 @@ app.get('/', (req, res) => {
 
 // 启动服务器
 app.listen(PORT, () => {
-  console.log(`🌿 感知之门应用运行在 http://localhost:${PORT}`);
+  console.log(`🌿 感知之门应用运行在端口 ${PORT}`);
   console.log('数据存储目录:', DATA_DIR);
 });
+
+// 导出app供Vercel使用
+module.exports = app;
