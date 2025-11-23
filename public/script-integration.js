@@ -49,10 +49,9 @@ function displayTasks(tasks) {
     if (!container) return;
     
     container.innerHTML = tasks.map(task => `
-        <div class="task-card" onclick="selectTask(${JSON.stringify(task).replace(/"/g, '&quot;')})">
-            <div class="task-icon">${task.icon}</div>
-            <div class="task-title">${task.title}</div>
-            <div class="task-description">${task.description}</div>
+        <div class="task-option" onclick="selectTask(${JSON.stringify(task).replace(/"/g, '&quot;')})">
+            <h3>${task.icon} ${task.title}</h3>
+            <p>${task.description}</p>
         </div>
     `).join('');
 }
