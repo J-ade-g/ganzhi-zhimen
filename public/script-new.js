@@ -27,17 +27,34 @@ window.doLogin = function() {
         body: JSON.stringify({ username, password })
     })
     .then(res => res.json())
-    .then(data => {
+    .then(async data => {
         if (data.success) {
             currentUser = data.user;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
-            const userProfile = localStorage.getItem(`userProfile_${currentUser.id}`);
-            if (userProfile) {
-                userData = JSON.parse(userProfile);
-                showMainApp();
-            } else {
-                showUserInfoForm();
+            // 尝试从数据库获取用户资料
+            try {
+                const profileResponse = await fetch(`/api/users/profile?userId=${currentUser.id}`);
+                const profileData = await profileResponse.json();
+                
+                if (profileData.success && profileData.profile) {
+                    // 有资料，直接进入主应用
+                    userData = profileData.profile;
+                    localStorage.setItem(`userProfile_${currentUser.id}`, JSON.stringify(userData));
+                    showMainApp();
+                } else {
+                    // 没有资料，需要填写
+                    showUserInfoForm();
+                }
+            } catch (err) {
+                // 如果API失败，检查localStorage
+                const userProfile = localStorage.getItem(`userProfile_${currentUser.id}`);
+                if (userProfile) {
+                    userData = JSON.parse(userProfile);
+                    showMainApp();
+                } else {
+                    showUserInfoForm();
+                }
             }
         } else {
             alert(data.error || '登录失败');

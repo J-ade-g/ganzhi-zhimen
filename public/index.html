@@ -230,12 +230,6 @@
                     <button id="adminBtn" onclick="window.open('/admin.html', '_blank')" class="task-btn" style="background: #6c757d; display: none;">🔧 后台管理</button>
                 </div>
             </div>
-            
-            <!-- AI助手触发按钮 -->
-            <button class="ai-assistant-btn" onclick="showAIChatInterface()" title="AI助手">
-                🤖
-            </button>
-            </div>
         </div>
 
         <!-- 记录界面 -->
@@ -402,10 +396,28 @@
             }, { passive: false });
         })();
     </script>
+    
+    <!-- AI助手触发按钮 -->
+    <button class="ai-assistant-btn" onclick="showAIChatInterface()" title="AI助手" style="display: none;" id="aiAssistantBtn">
+        🤖
+    </button>
+    
     <script src="script-enhancements.js" defer></script>
     <script src="script-new.js" defer></script>
     <script src="script-integration.js" defer></script>
     <script src="ai-assistant.js" defer></script>
     <script src="ai-integration.js" defer></script>
+    <script>
+        // 当用户登录后显示AI助手按钮
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    const aiBtn = document.getElementById('aiAssistantBtn');
+                    if (aiBtn) aiBtn.style.display = 'block';
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
