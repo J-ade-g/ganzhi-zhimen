@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     },
     {
@@ -12,12 +12,20 @@
   ],
   "routes": [
     {
-      "src": "/admin.html",
-      "dest": "/admin.html"
+      "src": "/api/auth/(login|register)",
+      "dest": "/api/auth.js"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
+      "src": "/api/users/profile",
+      "dest": "/api/users.js"
+    },
+    {
+      "src": "/api/records",
+      "dest": "/api/records.js"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "/admin.html"
     },
     {
       "src": "/",
