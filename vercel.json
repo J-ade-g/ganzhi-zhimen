@@ -32,6 +32,10 @@
       "dest": "/api/admin.js"
     },
     {
+      "src": "/api/ai/(zhipu|qwen)",
+      "dest": "/api/ai.js"
+    },
+    {
       "src": "/admin.html",
       "dest": "/admin.html"
     },
