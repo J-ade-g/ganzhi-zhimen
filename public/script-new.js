@@ -53,16 +53,27 @@ window.doLogin = function() {
 window.doRegister = function() {
     const username = document.getElementById('registerUsername').value;
     const email = document.getElementById('registerEmail').value;
+    const phone = document.getElementById('registerPhone').value;
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     
-    if (!username || !email || !password || !confirmPassword) {
-        alert('请填写所有必填字段');
+    if (!username || !password || !confirmPassword) {
+        alert('请填写用户名和密码');
+        return;
+    }
+    
+    if (!email && !phone) {
+        alert('请至少填写邮箱或手机号其中一项');
         return;
     }
     
     if (password !== confirmPassword) {
         alert('两次输入的密码不一致');
+        return;
+    }
+    
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+        alert('请输入正确的11位手机号');
         return;
     }
     
@@ -72,7 +83,8 @@ window.doRegister = function() {
         body: JSON.stringify({ 
             id: 'user_' + Date.now(),
             username, 
-            email, 
+            email: email || '', 
+            phone: phone || '',
             password,
             createdAt: new Date().toISOString()
         })
@@ -80,8 +92,11 @@ window.doRegister = function() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('注册成功！请登录');
-            switchAuthTab('login');
+            // 注册成功后直接登录
+            currentUser = data.user;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            alert('注册成功！');
+            showUserInfoForm();
         } else {
             alert(data.error || '注册失败');
         }

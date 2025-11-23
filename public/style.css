@@ -1429,3 +1429,112 @@ h2 {
         gap: 10px;
     }
 }
+
+
+/* 李克特量表样式 */
+.likert-scale {
+    margin: 15px 0;
+}
+
+.likert-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.likert-option {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    cursor: pointer;
+    padding: 15px 10px;
+    border: 2px solid #d3d3d3;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.likert-option:hover {
+    border-color: #52b788;
+    background: #f0f9f4;
+}
+
+.likert-option input[type="radio"] {
+    display: none;
+}
+
+.likert-option input[type="radio"]:checked + span {
+    color: #52b788;
+    font-weight: bold;
+}
+
+.likert-option input[type="radio"]:checked ~ span,
+.likert-option:has(input[type="radio"]:checked) {
+    border-color: #52b788;
+    background: #e8f5e9;
+}
+
+.likert-option span {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .likert-options {
+        gap: 8px;
+    }
+    
+    .likert-option {
+        min-width: 60px;
+        padding: 10px 5px;
+        font-size: 12px;
+    }
+}
+
+/* 个人资料编辑样式 */
+.profile-edit-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.profile-field {
+    margin: 15px 0;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+}
+
+.profile-field label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.profile-field .value {
+    color: #666;
+    padding: 8px;
+}
+
+.profile-field input,
+.profile-field select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.edit-actions button {
+    flex: 1;
+}
