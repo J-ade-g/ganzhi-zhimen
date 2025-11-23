@@ -22,6 +22,15 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
 }
 
+// 确保媒体目录存在
+const MEDIA_DIR = path.join(__dirname, 'media');
+if (!fs.existsSync(MEDIA_DIR)) {
+  fs.mkdirSync(MEDIA_DIR);
+}
+
+// 静态文件服务 - 媒体文件
+app.use('/media', express.static(MEDIA_DIR));
+
 // 初始化数据文件
 if (!fs.existsSync(USERS_FILE)) {
   fs.writeFileSync(USERS_FILE, '[]');
@@ -92,9 +101,23 @@ app.post('/api/auth/login', (req, res) => {
 app.post('/api/users/profile', (req, res) => {
   try {
     const profileData = req.body;
-    const savedProfile = db.saveProfile(profileData);
-    res.json({ success: true, profile: savedProfile });
+    
+    // 保存到JSON文件
+    let profiles = readJSONFile(path.join(DATA_DIR, 'profiles.json')) || [];
+    
+    // 查找是否已存在该用户的资料
+    const existingIndex = profiles.findIndex(p => p.userId === profileData.userId);
+    if (existingIndex >= 0) {
+      profiles[existingIndex] = { ...profiles[existingIndex], ...profileData };
+    } else {
+      profiles.push(profileData);
+    }
+    
+    writeJSONFile(path.join(DATA_DIR, 'profiles.json'), profiles);
+    
+    res.json({ success: true, profile: profileData });
   } catch (error) {
+    console.error('保存用户资料错误:', error);
     res.status(500).json({ error: '保存用户资料失败' });
   }
 });
@@ -207,6 +230,10 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+app.get('/admin.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // 任务生成逻辑
 function generatePersonalizedTask(user) {
   const tasks = [];
@@ -272,6 +299,16 @@ function generatePersonalizedTask(user) {
   
   return selectedTask;
 }
+
+// 测试页面路由
+app.get('/test.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test.html'));
+});
+
+// 调试页面路由
+app.get('/debug.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'debug.html'));
+});
 
 // 默认路由
 app.get('/', (req, res) => {

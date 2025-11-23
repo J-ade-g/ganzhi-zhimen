@@ -12,34 +12,73 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载所有数据
 async function loadAllData() {
     try {
-        // 首先尝试从localStorage加载真实数据
-        const localUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
-        const localRecords = JSON.parse(localStorage.getItem('allRecords') || '[]');
+        // 从localStorage收集所有用户数据
+        const allStorageUsers = [];
+        const allStorageRecords = [];
         
-        if (localUsers.length > 0 || localRecords.length > 0) {
-            console.log('从localStorage加载真实数据:', { users: localUsers.length, records: localRecords.length });
-            allUsers = localUsers;
-            allRecords = localRecords;
-        } else {
-            // 尝试从API获取数据
-            const usersResponse = await fetch('/api/admin/users');
-            allUsers = await usersResponse.json();
-            
-            const recordsResponse = await fetch('/api/admin/records');
-            allRecords = await recordsResponse.json();
-            
-            console.log('从API加载数据:', { users: allUsers.length, records: allRecords.length });
+        // 收集当前用户
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        if (currentUser) {
+            // 获取该用户的资料
+            const userProfile = localStorage.getItem(`userProfile_${currentUser.id}`);
+            if (userProfile) {
+                const profile = JSON.parse(userProfile);
+                allStorageUsers.push({ 
+                    ...currentUser, 
+                    profile: profile,
+                    age: profile.age,
+                    gender: profile.gender,
+                    location: profile.location,
+                    greenLevel: profile.greenLevel,
+                    interests: profile.interests || []
+                });
+            } else {
+                allStorageUsers.push(currentUser);
+            }
         }
         
-        // 更新所有视图
-        updateOverview();
-        updateUsersAnalysis();
-        updateRecordsAnalysis();
-        updateTrendsAnalysis();
+        // 收集所有用户记录
+        const userRecords = JSON.parse(localStorage.getItem('userRecords') || '[]');
+        allStorageRecords.push(...userRecords);
+        
+        // 尝试从API获取数据
+        try {
+            const usersResponse = await fetch('/api/admin/users');
+            if (usersResponse.ok) {
+                const apiUsers = await usersResponse.json();
+                allUsers = apiUsers.length > 0 ? apiUsers : allStorageUsers;
+            } else {
+                allUsers = allStorageUsers;
+            }
+            
+            const recordsResponse = await fetch('/api/admin/records');
+            if (recordsResponse.ok) {
+                const apiRecords = await recordsResponse.json();
+                allRecords = apiRecords.length > 0 ? apiRecords : allStorageRecords;
+            } else {
+                allRecords = allStorageRecords;
+            }
+        } catch (apiError) {
+            console.log('API不可用，使用本地数据');
+            allUsers = allStorageUsers;
+            allRecords = allStorageRecords;
+        }
+        
+        console.log('加载数据完成:', { users: allUsers.length, records: allRecords.length });
+        
+        // 如果没有数据，生成演示数据
+        if (allUsers.length === 0 && allRecords.length === 0) {
+            loadDemoData();
+        } else {
+            // 更新所有视图
+            updateOverview();
+            updateUsersAnalysis();
+            updateRecordsAnalysis();
+            updateTrendsAnalysis();
+        }
         
     } catch (error) {
         console.error('加载数据失败:', error);
-        // 如果都失败，生成演示数据
         loadDemoData();
     }
     
@@ -276,10 +315,13 @@ function updateAgeDistribution() {
     };
     
     allUsers.forEach(user => {
-        if (user.age <= 25) ageGroups['18-25']++;
-        else if (user.age <= 35) ageGroups['26-35']++;
-        else if (user.age <= 50) ageGroups['36-50']++;
-        else ageGroups['50+']++;
+        const age = user.age || (user.profile && user.profile.age);
+        if (age) {
+            if (age <= 25) ageGroups['18-25']++;
+            else if (age <= 35) ageGroups['26-35']++;
+            else if (age <= 50) ageGroups['36-50']++;
+            else ageGroups['50+']++;
+        }
     });
     
     let html = '';
@@ -307,7 +349,8 @@ function updateLocationDistribution() {
     const locationCounts = {};
     
     allUsers.forEach(user => {
-        locationCounts[user.location] = (locationCounts[user.location] || 0) + 1;
+        const location = user.location || (user.profile && user.profile.location) || '未知';
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
     });
     
     let html = '';
@@ -335,11 +378,10 @@ function updateInterestHeatmap() {
     const interestCounts = {};
     
     allUsers.forEach(user => {
-        if (user.interests) {
-            user.interests.forEach(interest => {
-                interestCounts[interest] = (interestCounts[interest] || 0) + 1;
-            });
-        }
+        const interests = user.interests || (user.profile && user.profile.interests) || [];
+        interests.forEach(interest => {
+            interestCounts[interest] = (interestCounts[interest] || 0) + 1;
+        });
     });
     
     let html = '';
@@ -369,6 +411,11 @@ function updateUsersTable() {
     
     let html = '';
     allUsers.forEach(user => {
+        const age = user.age || (user.profile && user.profile.age) || '未知';
+        const gender = user.gender || (user.profile && user.profile.gender) || '未知';
+        const location = user.location || (user.profile && user.profile.location) || '未知';
+        const greenLevel = user.greenLevel || (user.profile && user.profile.greenLevel) || '未知';
+        
         const userRecords = allRecords.filter(r => r.userId === user.id);
         const lastActivity = userRecords.length > 0 ? 
             new Date(Math.max(...userRecords.map(r => new Date(r.timestamp)))).toLocaleDateString('zh-CN') : 
@@ -377,17 +424,17 @@ function updateUsersTable() {
         html += `
             <tr>
                 <td>${user.id}</td>
-                <td>${user.age}岁</td>
-                <td>${user.gender || '未知'}</td>
-                <td>${user.location}</td>
-                <td>${user.greenLevel || '未知'}</td>
+                <td>${age}${typeof age === 'number' ? '岁' : ''}</td>
+                <td>${gender}</td>
+                <td>${location}</td>
+                <td>${greenLevel}</td>
                 <td>${userRecords.length}</td>
                 <td>${lastActivity}</td>
             </tr>
         `;
     });
     
-    tbody.innerHTML = html;
+    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #6c757d;">暂无用户数据</td></tr>';
 }
 
 // 更新记录分析
@@ -525,7 +572,23 @@ function updateRecordsTable() {
     let html = '';
     allRecords.slice(0, 50).forEach(record => { // 只显示前50条记录
         const user = allUsers.find(u => u.id === record.userId);
-        const userName = user ? `${user.age}岁${user.gender || ''}` : record.userId;
+        let userName = record.userId;
+        
+        if (user) {
+            const age = user.age || (user.profile && user.profile.age);
+            const gender = user.gender || (user.profile && user.profile.gender);
+            
+            if (age && gender) {
+                userName = `${age}岁${gender}`;
+            } else if (age) {
+                userName = `${age}岁`;
+            } else if (user.username) {
+                userName = user.username;
+            }
+        }
+        
+        const hasImages = record.images && record.images.length > 0;
+        const hasAudio = record.audioData;
         
         html += `
             <tr>
@@ -534,8 +597,18 @@ function updateRecordsTable() {
                 <td>${record.task?.title || '未知'}</td>
                 <td>${new Date(record.timestamp).toLocaleDateString('zh-CN')}</td>
                 <td>${record.textRecord ? '✓' : '✗'}</td>
-                <td>${record.images?.length || 0}</td>
-                <td>${record.audioData ? '✓' : '✗'}</td>
+                <td>
+                    ${hasImages ? 
+                        `<button onclick="viewRecordImages('${record.id}')" style="background: #007bff; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer;">${record.images.length}张</button>` : 
+                        '0'
+                    }
+                </td>
+                <td>
+                    ${hasAudio ? 
+                        `<button onclick="viewRecordAudio('${record.id}')" style="background: #28a745; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer;">播放</button>` : 
+                        '✗'
+                    }
+                </td>
             </tr>
         `;
     });
@@ -553,19 +626,151 @@ function updateTrendsAnalysis() {
 // 更新用户增长趋势
 function updateUserGrowthTrend() {
     const container = document.getElementById('userGrowthTrend');
-    container.innerHTML = '<p>用户增长趋势图（需要更多历史数据）</p>';
+    
+    if (allUsers.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">暂无用户数据</p>';
+        return;
+    }
+    
+    // 按注册日期分组统计
+    const usersByDate = {};
+    allUsers.forEach(user => {
+        const date = user.createdAt ? new Date(user.createdAt).toLocaleDateString('zh-CN') : '未知日期';
+        usersByDate[date] = (usersByDate[date] || 0) + 1;
+    });
+    
+    // 计算累计用户数
+    const dates = Object.keys(usersByDate).sort();
+    let cumulative = 0;
+    
+    let html = '<div style="padding: 20px;">';
+    html += '<h4 style="margin-bottom: 15px;">用户注册趋势</h4>';
+    
+    dates.forEach(date => {
+        cumulative += usersByDate[date];
+        const percentage = Math.round(cumulative / allUsers.length * 100);
+        
+        html += `
+            <div style="margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>${date}</span>
+                    <span>新增 ${usersByDate[date]} 人 | 累计 ${cumulative} 人</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // 更新记录活跃度趋势
 function updateRecordActivityTrend() {
     const container = document.getElementById('recordActivityTrend');
-    container.innerHTML = '<p>记录活跃度趋势图（需要更多历史数据）</p>';
+    
+    if (allRecords.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">暂无记录数据</p>';
+        return;
+    }
+    
+    // 按日期分组统计记录数
+    const recordsByDate = {};
+    allRecords.forEach(record => {
+        const date = record.date || new Date(record.timestamp).toLocaleDateString('zh-CN');
+        recordsByDate[date] = (recordsByDate[date] || 0) + 1;
+    });
+    
+    const dates = Object.keys(recordsByDate).sort();
+    const maxCount = Math.max(...Object.values(recordsByDate));
+    
+    let html = '<div style="padding: 20px;">';
+    html += '<h4 style="margin-bottom: 15px;">每日记录数量</h4>';
+    
+    dates.forEach(date => {
+        const count = recordsByDate[date];
+        const percentage = Math.round(count / maxCount * 100);
+        
+        html += `
+            <div style="margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>${date}</span>
+                    <span>${count} 条记录</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // 更新功能使用趋势
 function updateFeatureUsageTrend() {
     const container = document.getElementById('featureUsageTrend');
-    container.innerHTML = '<p>功能使用趋势图（需要更多历史数据）</p>';
+    
+    if (allRecords.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">暂无记录数据</p>';
+        return;
+    }
+    
+    // 统计各功能使用次数
+    const featureUsage = {
+        '文字记录': 0,
+        '图片记录': 0,
+        '录音记录': 0,
+        '感官体验': 0
+    };
+    
+    allRecords.forEach(record => {
+        if (record.textRecord && record.textRecord.trim()) {
+            featureUsage['文字记录']++;
+        }
+        if (record.images && record.images.length > 0) {
+            featureUsage['图片记录']++;
+        }
+        if (record.audioData) {
+            featureUsage['录音记录']++;
+        }
+        if (record.sensoryExperience && (
+            record.sensoryExperience.visual ||
+            record.sensoryExperience.auditory ||
+            record.sensoryExperience.tactile ||
+            record.sensoryExperience.olfactory
+        )) {
+            featureUsage['感官体验']++;
+        }
+    });
+    
+    const maxUsage = Math.max(...Object.values(featureUsage));
+    
+    let html = '<div style="padding: 20px;">';
+    html += '<h4 style="margin-bottom: 15px;">功能使用统计</h4>';
+    
+    Object.entries(featureUsage).forEach(([feature, count]) => {
+        const percentage = maxUsage > 0 ? Math.round(count / maxUsage * 100) : 0;
+        const usageRate = allRecords.length > 0 ? Math.round(count / allRecords.length * 100) : 0;
+        
+        html += `
+            <div style="margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>${feature}</span>
+                    <span>${count} 次 (${usageRate}%)</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // 应用用户筛选
@@ -580,11 +785,33 @@ function exportData() {
     const exportRecords = document.getElementById('exportRecords').checked;
     const exportStats = document.getElementById('exportStats').checked;
     
-    const data = {};
+    if (!exportUsers && !exportRecords && !exportStats) {
+        alert('请至少选择一项要导出的数据');
+        return;
+    }
     
-    if (exportUsers) data.users = allUsers;
-    if (exportRecords) data.records = allRecords;
-    if (exportStats) data.stats = calculateOverallStats();
+    const data = {};
+    let summary = [];
+    
+    if (exportUsers) {
+        data.users = allUsers;
+        summary.push(`用户数据: ${allUsers.length} 条`);
+    }
+    if (exportRecords) {
+        data.records = allRecords;
+        summary.push(`记录数据: ${allRecords.length} 条`);
+    }
+    if (exportStats) {
+        data.stats = calculateOverallStats();
+        summary.push('统计数据: 已包含');
+    }
+    
+    // 显示预览确认
+    const confirmMsg = `即将导出以下数据：\n\n${summary.join('\n')}\n\n确认导出吗？`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
     
     // 创建下载链接
     const dataStr = JSON.stringify(data, null, 2);
@@ -597,4 +824,179 @@ function exportData() {
     link.click();
     
     URL.revokeObjectURL(url);
+    
+    alert('数据导出成功！');
+}
+// 查看记
+录图片
+function viewRecordImages(recordId) {
+    const record = allRecords.find(r => r.id === recordId);
+    if (!record || !record.images || record.images.length === 0) {
+        alert('该记录没有图片');
+        return;
+    }
+    
+    // 创建图片查看模态框
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    let currentImageIndex = 0;
+    
+    const updateModalContent = () => {
+        const image = record.images[currentImageIndex];
+        const imageSrc = image.data || image.url || '';
+        
+        modal.innerHTML = `
+            <div style="color: white; margin-bottom: 20px; text-align: center;">
+                <h3>记录图片 - ${record.task?.title || '未知任务'}</h3>
+                <p>图片 ${currentImageIndex + 1} / ${record.images.length}</p>
+            </div>
+            <div style="position: relative; max-width: 90%; max-height: 70%;">
+                <img src="${imageSrc}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
+                ${record.images.length > 1 ? `
+                    <button onclick="previousImage()" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); border: none; padding: 10px; border-radius: 50%; cursor: pointer;">‹</button>
+                    <button onclick="nextImage()" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); border: none; padding: 10px; border-radius: 50%; cursor: pointer;">›</button>
+                ` : ''}
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="closeModal()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">关闭</button>
+            </div>
+        `;
+    };
+    
+    // 添加全局函数
+    window.previousImage = () => {
+        currentImageIndex = (currentImageIndex - 1 + record.images.length) % record.images.length;
+        updateModalContent();
+    };
+    
+    window.nextImage = () => {
+        currentImageIndex = (currentImageIndex + 1) % record.images.length;
+        updateModalContent();
+    };
+    
+    window.closeModal = () => {
+        document.body.removeChild(modal);
+        delete window.previousImage;
+        delete window.nextImage;
+        delete window.closeModal;
+    };
+    
+    updateModalContent();
+    document.body.appendChild(modal);
+    
+    // 键盘导航
+    const handleKeyPress = (e) => {
+        if (e.key === 'ArrowLeft') window.previousImage();
+        if (e.key === 'ArrowRight') window.nextImage();
+        if (e.key === 'Escape') window.closeModal();
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    
+    // 清理事件监听器
+    const originalCloseModal = window.closeModal;
+    window.closeModal = () => {
+        document.removeEventListener('keydown', handleKeyPress);
+        originalCloseModal();
+    };
+}
+
+// 查看记录录音
+function viewRecordAudio(recordId) {
+    const record = allRecords.find(r => r.id === recordId);
+    if (!record || !record.audioData) {
+        alert('该记录没有录音');
+        return;
+    }
+    
+    // 创建录音播放模态框
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    const audioSrc = record.audioData.data || record.audioData.url || '';
+    const duration = record.audioData.duration || 0;
+    
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 500px; width: 100%;">
+            <h3 style="margin-bottom: 20px; color: #0d3b2e;">录音播放</h3>
+            <div style="margin-bottom: 15px;">
+                <strong>任务：</strong>${record.task?.title || '未知任务'}<br>
+                <strong>录音时长：</strong>${formatAudioTime(duration)}<br>
+                <strong>记录时间：</strong>${new Date(record.timestamp).toLocaleString('zh-CN')}
+            </div>
+            <audio controls style="width: 100%; margin: 20px 0;">
+                <source src="${audioSrc}" type="audio/wav">
+                您的浏览器不支持音频播放。
+            </audio>
+            <div style="margin-top: 20px;">
+                <button onclick="closeAudioModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">关闭</button>
+                <button onclick="downloadAudio('${audioSrc}', '${record.task?.title || 'recording'}_${record.id}.wav')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">下载</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加关闭函数
+    window.closeAudioModal = () => {
+        document.body.removeChild(modal);
+        delete window.closeAudioModal;
+        delete window.downloadAudio;
+    };
+    
+    // 添加下载函数
+    window.downloadAudio = (audioSrc, filename) => {
+        const link = document.createElement('a');
+        link.href = audioSrc;
+        link.download = filename;
+        link.click();
+    };
+    
+    document.body.appendChild(modal);
+    
+    // ESC键关闭
+    const handleKeyPress = (e) => {
+        if (e.key === 'Escape') window.closeAudioModal();
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    
+    // 清理事件监听器
+    const originalCloseModal = window.closeAudioModal;
+    window.closeAudioModal = () => {
+        document.removeEventListener('keydown', handleKeyPress);
+        originalCloseModal();
+    };
+}
+
+// 格式化音频时长
+function formatAudioTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }

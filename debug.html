@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .auth-tabs { display: flex; gap: 10px; margin: 20px 0; }
+        .auth-tab { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; }
+        .auth-tab.active { background: #007bff; color: white; }
+        .auth-form { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>登录注册功能调试</h1>
+    
+    <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" onclick="switchTab('login')">登录</button>
+        <button class="auth-tab" data-tab="register" onclick="switchTab('register')">注册</button>
+    </div>
+    
+    <div id="loginForm" class="auth-form">
+        <h3>登录表单</h3>
+        <input type="text" placeholder="用户名" id="loginUsername">
+        <input type="password" placeholder="密码" id="loginPassword">
+        <button onclick="testLogin()">登录</button>
+    </div>
+    
+    <div id="registerForm" class="auth-form" style="display: none;">
+        <h3>注册表单</h3>
+        <input type="text" placeholder="用户名" id="registerUsername">
+        <input type="email" placeholder="邮箱" id="registerEmail">
+        <input type="password" placeholder="密码" id="registerPassword">
+        <input type="password" placeholder="确认密码" id="confirmPassword">
+        <button onclick="testRegister()">注册</button>
+    </div>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+        
+        function switchTab(tab) {
+            log('切换到标签: ' + tab);
+            
+            // 移除所有active类
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
+            
+            // 激活选中的标签和表单
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(tab + 'Form').style.display = 'block';
+        }
+        
+        function testLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            log('尝试登录: ' + username + ' / ' + password);
+            
+            if (!username || !password) {
+                log('错误: 请填写用户名和密码');
+                return;
+            }
+            
+            // 测试API调用
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('登录响应: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                log('登录错误: ' + error.message);
+            });
+        }
+        
+        function testRegister() {
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            log('尝试注册: ' + username + ' / ' + email);
+            
+            if (!username || !email || !password || !confirmPassword) {
+                log('错误: 请填写所有字段');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                log('错误: 密码不一致');
+                return;
+            }
+            
+            // 测试API调用
+            fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: 'user_' + Date.now(),
+                    username, 
+                    email, 
+                    password,
+                    createdAt: new Date().toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('注册响应: ' + JSON.stringify(data));
+                if (data.success) {
+                    switchTab('login');
+                }
+            })
+            .catch(error => {
+                log('注册错误: ' + error.message);
+            });
+        }
+        
+        log('调试页面加载完成');
+    </script>
+</body>
+</html>

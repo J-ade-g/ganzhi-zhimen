@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>感知之门应用 - 功能测试</h1>
+    
+    <div class="test-section">
+        <h3>1. API连接测试</h3>
+        <button onclick="testAPI()">测试API连接</button>
+        <div id="apiResult" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 用户注册测试</h3>
+        <button onclick="testRegister()">测试用户注册</button>
+        <div id="registerResult" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 用户登录测试</h3>
+        <button onclick="testLogin()">测试用户登录</button>
+        <div id="loginResult" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 媒体权限测试</h3>
+        <button onclick="testCamera()">测试摄像头权限</button>
+        <button onclick="testMicrophone()">测试麦克风权限</button>
+        <div id="mediaResult" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. 记录保存测试</h3>
+        <button onclick="testRecordSave()">测试记录保存</button>
+        <div id="recordResult" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>6. 后台管理测试</h3>
+        <button onclick="testAdmin()">测试后台数据获取</button>
+        <div id="adminResult" class="test-result"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('apiResult');
+            try {
+                const response = await fetch('/api/admin/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ API连接正常<br>统计数据: ' + JSON.stringify(data);
+                } else {
+                    throw new Error('API响应错误: ' + response.status);
+                }
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ API连接失败: ' + error.message;
+            }
+        }
+
+        async function testRegister() {
+            const result = document.getElementById('registerResult');
+            const testUser = {
+                username: 'test_' + Date.now(),
+                email: 'test_' + Date.now() + '@example.com',
+                password: '123456'
+            };
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 用户注册成功<br>用户ID: ' + data.user.id;
+                    window.testUserId = data.user.id;
+                    window.testUsername = testUser.username;
+                    window.testPassword = testUser.password;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 用户注册失败: ' + error.message;
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('loginResult');
+            if (!window.testUsername) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 请先运行注册测试';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: window.testUsername,
+                        password: window.testPassword
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 用户登录成功<br>用户名: ' + data.user.username;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 用户登录失败: ' + error.message;
+            }
+        }
+
+        async function testCamera() {
+            const result = document.getElementById('mediaResult');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                result.className = 'test-result success';
+                result.innerHTML = '✅ 摄像头权限正常';
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 摄像头权限被拒绝: ' + error.message;
+            }
+        }
+
+        async function testMicrophone() {
+            const result = document.getElementById('mediaResult');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                result.className = 'test-result success';
+                result.innerHTML = '✅ 麦克风权限正常';
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 麦克风权限被拒绝: ' + error.message;
+            }
+        }
+
+        async function testRecordSave() {
+            const result = document.getElementById('recordResult');
+            if (!window.testUserId) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 请先运行注册测试';
+                return;
+            }
+            
+            const testRecord = {
+                userId: window.testUserId,
+                task: { title: '测试任务', description: '这是一个测试任务' },
+                textRecord: '这是一条测试记录',
+                sensoryExperience: {
+                    visual: '看到了绿色',
+                    auditory: '听到了鸟叫',
+                    tactile: '感受到了温暖',
+                    olfactory: '闻到了花香'
+                },
+                images: [],
+                audioData: null
+            };
+            
+            try {
+                const response = await fetch('/api/records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testRecord)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 记录保存成功<br>记录ID: ' + data.record.id;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 记录保存失败: ' + error.message;
+            }
+        }
+
+        async function testAdmin() {
+            const result = document.getElementById('adminResult');
+            try {
+                const [usersResponse, recordsResponse] = await Promise.all([
+                    fetch('/api/admin/users'),
+                    fetch('/api/admin/records')
+                ]);
+                
+                const users = await usersResponse.json();
+                const records = await recordsResponse.json();
+                
+                result.className = 'test-result success';
+                result.innerHTML = `✅ 后台数据获取成功<br>用户数: ${users.length}<br>记录数: ${records.length}`;
+            } catch (error) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 后台数据获取失败: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

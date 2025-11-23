@@ -207,40 +207,20 @@
         <div id="users" class="admin-section" style="display: none;">
             <div class="admin-card">
                 <h2>👥 用户分析</h2>
-                
-                <div class="filter-section">
-                    <div class="filter-group">
-                        <label>筛选条件：</label>
-                        <select id="ageFilter">
-                            <option value="">所有年龄</option>
-                            <option value="18-25">18-25岁</option>
-                            <option value="26-35">26-35岁</option>
-                            <option value="36-50">36-50岁</option>
-                            <option value="50+">50岁以上</option>
-                        </select>
-                        <select id="locationFilter">
-                            <option value="">所有居住地</option>
-                            <option value="大城市中心">大城市中心</option>
-                            <option value="城市郊区">城市郊区</option>
-                            <option value="小城镇">小城镇</option>
-                            <option value="乡村">乡村</option>
-                            <option value="山区">山区</option>
-                        </select>
-                        <button class="nav-btn" onclick="applyUserFilters()">应用筛选</button>
-                    </div>
-                </div>
-
                 <div class="analysis-section">
                     <div class="analysis-card">
                         <h3>年龄分布</h3>
+                        <p style="font-size: 12px; color: #6c757d; margin-bottom: 15px;">显示不同年龄段用户的数量占比</p>
                         <div id="ageDistribution"></div>
                     </div>
                     <div class="analysis-card">
                         <h3>居住地分布</h3>
+                        <p style="font-size: 12px; color: #6c757d; margin-bottom: 15px;">显示用户居住地类型的分布情况</p>
                         <div id="locationDistribution"></div>
                     </div>
                     <div class="analysis-card">
                         <h3>兴趣标签热度</h3>
+                        <p style="font-size: 12px; color: #6c757d; margin-bottom: 15px;">显示用户选择最多的兴趣标签</p>
                         <div id="interestHeatmap"></div>
                     </div>
                 </div>
@@ -330,20 +310,37 @@
             <div class="admin-card">
                 <h2>📤 数据导出</h2>
                 
-                <div class="filter-section">
-                    <h3>选择导出数据</h3>
-                    <div class="filter-group">
-                        <label><input type="checkbox" id="exportUsers" checked> 用户数据</label>
-                        <label><input type="checkbox" id="exportRecords" checked> 记录数据</label>
-                        <label><input type="checkbox" id="exportStats" checked> 统计数据</label>
+                <div class="filter-section" style="background: #f8f9fa; padding: 25px; border-radius: 12px;">
+                    <h3 style="margin-bottom: 20px;">数据导出</h3>
+                    <p style="font-size: 14px; color: #6c757d; margin-bottom: 20px;">选择要导出的数据类型，系统将生成JSON格式文件</p>
+                    
+                    <div style="display: grid; gap: 15px; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; padding: 12px; background: white; border-radius: 8px; cursor: pointer;">
+                            <input type="checkbox" id="exportUsers" checked style="margin-right: 10px; width: 18px; height: 18px;">
+                            <div>
+                                <strong>用户数据</strong>
+                                <div style="font-size: 12px; color: #6c757d;">包含用户基本信息、个人资料等（当前 ${allUsers.length} 条）</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; padding: 12px; background: white; border-radius: 8px; cursor: pointer;">
+                            <input type="checkbox" id="exportRecords" checked style="margin-right: 10px; width: 18px; height: 18px;">
+                            <div>
+                                <strong>记录数据</strong>
+                                <div style="font-size: 12px; color: #6c757d;">包含所有用户的感知记录、图片、录音等（当前 ${allRecords.length} 条）</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; padding: 12px; background: white; border-radius: 8px; cursor: pointer;">
+                            <input type="checkbox" id="exportStats" checked style="margin-right: 10px; width: 18px; height: 18px;">
+                            <div>
+                                <strong>统计数据</strong>
+                                <div style="font-size: 12px; color: #6c757d;">包含汇总统计信息、趋势分析等</div>
+                            </div>
+                        </label>
                     </div>
-                    <div class="filter-group" style="margin-top: 15px;">
-                        <label>时间范围：</label>
-                        <input type="date" id="startDate">
-                        <label>到</label>
-                        <input type="date" id="endDate">
-                        <button class="nav-btn" onclick="exportData()">导出数据</button>
-                    </div>
+                    
+                    <button class="nav-btn" onclick="exportData()" style="width: 100%; padding: 12px; font-size: 16px;">📥 导出数据</button>
                 </div>
 
                 <div class="analysis-section">

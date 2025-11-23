@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录注册测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 10px; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>登录注册功能测试</h1>
+    
+    <div class="test-section">
+        <h2>注册测试</h2>
+        <input type="text" id="regUsername" placeholder="用户名" value="testuser">
+        <input type="email" id="regEmail" placeholder="邮箱" value="test@example.com">
+        <input type="password" id="regPassword" placeholder="密码" value="123456">
+        <button onclick="testRegister()">测试注册</button>
+        <div id="regResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>登录测试</h2>
+        <input type="text" id="loginUsername" placeholder="用户名" value="testuser">
+        <input type="password" id="loginPassword" placeholder="密码" value="123456">
+        <button onclick="testLogin()">测试登录</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>使用演示账号登录</h2>
+        <button onclick="loginDemo()">使用演示账号登录 (demo/123456)</button>
+        <div id="demoResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testRegister() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: 'user_' + Date.now(),
+                        username,
+                        email,
+                        password,
+                        createdAt: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('regResult').innerHTML = 
+                    `<strong>注册结果:</strong><br>` +
+                    `状态: ${response.status}<br>` +
+                    `响应: ${JSON.stringify(data, null, 2)}`;
+                    
+                if (data.success) {
+                    alert('注册成功！可以尝试登录了');
+                }
+            } catch (error) {
+                document.getElementById('regResult').innerHTML = 
+                    `<strong>注册错误:</strong><br>${error.message}`;
+            }
+        }
+        
+        async function testLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loginResult').innerHTML = 
+                    `<strong>登录结果:</strong><br>` +
+                    `状态: ${response.status}<br>` +
+                    `响应: ${JSON.stringify(data, null, 2)}`;
+                    
+                if (data.success) {
+                    alert('登录成功！');
+                    // 跳转到主页面
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<strong>登录错误:</strong><br>${error.message}`;
+            }
+        }
+        
+        async function loginDemo() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        username: 'demo', 
+                        password: '123456' 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('demoResult').innerHTML = 
+                    `<strong>演示登录结果:</strong><br>` +
+                    `状态: ${response.status}<br>` +
+                    `响应: ${JSON.stringify(data, null, 2)}`;
+                    
+                if (data.success) {
+                    alert('演示账号登录成功！');
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                document.getElementById('demoResult').innerHTML = 
+                    `<strong>演示登录错误:</strong><br>${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

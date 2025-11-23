@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: #333; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #52b788;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #40916c;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌿 感知之门 - 登录测试</h1>
+        
+        <div class="form-group">
+            <label>用户名：</label>
+            <input type="text" id="username" value="demo" placeholder="输入用户名">
+        </div>
+        
+        <div class="form-group">
+            <label>密码：</label>
+            <input type="password" id="password" value="123456" placeholder="输入密码">
+        </div>
+        
+        <button onclick="testLogin()">测试登录</button>
+        <button onclick="testRegister()" style="background: #74c69d;">测试注册</button>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+            logDiv.innerHTML = `<div class="${className}">[${time}] ${message}</div>` + logDiv.innerHTML;
+            console.log(message);
+        }
+
+        function testLogin() {
+            log('开始测试登录...');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            log('用户名: ' + username);
+            
+            if (!username || !password) {
+                log('请填写用户名和密码', 'error');
+                alert('请填写用户名和密码');
+                return;
+            }
+            
+            log('发送登录请求到服务器...');
+            
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => {
+                log('服务器响应状态: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                log('服务器返回: ' + JSON.stringify(data));
+                
+                if (data.success) {
+                    log('✓ 登录成功！', 'success');
+                    alert('登录成功！用户: ' + data.user.username);
+                    
+                    // 保存用户信息
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    log('用户信息已保存到localStorage');
+                    
+                    // 跳转到主页
+                    setTimeout(() => {
+                        log('准备跳转到主页...');
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    log('✗ 登录失败: ' + (data.error || '未知错误'), 'error');
+                    alert('登录失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                log('✗ 请求错误: ' + error.message, 'error');
+                alert('登录失败: ' + error.message);
+            });
+        }
+
+        function testRegister() {
+            log('开始测试注册...');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const email = username + '@example.com';
+            
+            log('注册信息: ' + username + ', ' + email);
+            
+            if (!username || !password) {
+                log('请填写用户名和密码', 'error');
+                alert('请填写用户名和密码');
+                return;
+            }
+            
+            log('发送注册请求到服务器...');
+            
+            fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: 'user_' + Date.now(),
+                    username,
+                    email,
+                    password,
+                    createdAt: new Date().toISOString()
+                })
+            })
+            .then(response => {
+                log('服务器响应状态: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                log('服务器返回: ' + JSON.stringify(data));
+                
+                if (data.success) {
+                    log('✓ 注册成功！', 'success');
+                    alert('注册成功！现在可以登录了');
+                } else {
+                    log('✗ 注册失败: ' + (data.error || '未知错误'), 'error');
+                    alert('注册失败: ' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                log('✗ 请求错误: ' + error.message, 'error');
+                alert('注册失败: ' + error.message);
+            });
+        }
+
+        // 页面加载时显示提示
+        window.onload = function() {
+            log('页面加载完成');
+            log('默认账号: demo / 123456');
+            log('点击"测试登录"按钮开始测试');
+        };
+    </script>
+</body>
+</html>

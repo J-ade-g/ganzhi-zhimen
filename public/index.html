@@ -14,12 +14,12 @@
             <h2 id="authTitle">用户登录</h2>
             
             <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="login">登录</button>
-                <button class="auth-tab" data-tab="register">注册</button>
+                <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">登录</button>
+                <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">注册</button>
             </div>
             
             <!-- 登录表单 -->
-            <form id="loginForm" class="auth-form">
+            <div id="loginForm" class="auth-form">
                 <div class="form-group">
                     <label>用户名或邮箱：</label>
                     <input type="text" id="loginUsername" required>
@@ -28,11 +28,11 @@
                     <label>密码：</label>
                     <input type="password" id="loginPassword" required>
                 </div>
-                <button type="submit" class="submit-btn">登录</button>
-            </form>
+                <button type="button" class="submit-btn" onclick="doLogin()">登录</button>
+            </div>
             
             <!-- 注册表单 -->
-            <form id="registerForm" class="auth-form" style="display: none;">
+            <div id="registerForm" class="auth-form" style="display: none;">
                 <div class="form-group">
                     <label>用户名：</label>
                     <input type="text" id="registerUsername" required minlength="3">
@@ -51,8 +51,8 @@
                     <label>确认密码：</label>
                     <input type="password" id="confirmPassword" required>
                 </div>
-                <button type="submit" class="submit-btn">注册</button>
-            </form>
+                <button type="button" class="submit-btn" onclick="doRegister()">注册</button>
+            </div>
         </div>
 
         <!-- 用户信息收集界面 -->
@@ -170,6 +170,7 @@
                 <div class="task-actions">
                     <button id="refreshTasks" class="change-btn">刷新感知之门</button>
                     <button id="viewRecords" class="back-btn">我的</button>
+                    <button id="adminBtn" onclick="window.open('/admin.html', '_blank')" class="task-btn" style="background: #6c757d; display: none;">🔧 后台管理</button>
                 </div>
             </div>
         </div>
@@ -262,6 +263,6 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="script-new.js"></script>
 </body>
 </html>
