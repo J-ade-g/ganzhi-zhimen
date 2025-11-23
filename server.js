@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const db = require('./database');
+
+// 使用MongoDB或内存数据库
+const USE_MONGODB = process.env.MONGODB_URI ? true : false;
+const db = USE_MONGODB ? require('./database-mongodb') : require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -64,36 +67,38 @@ function writeJSONFile(filePath, data) {
 // API 路由
 
 // 用户注册
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
     const userData = req.body;
     
     // 检查用户是否已存在
-    const existingUser = db.findUser({ username: userData.username, email: userData.email });
+    const existingUser = await db.findUser({ username: userData.username, email: userData.email });
     if (existingUser) {
-      return res.status(400).json({ error: '用户名或邮箱已存在' });
+      return res.status(400).json({ success: false, error: '用户名或邮箱已存在' });
     }
     
-    const newUser = db.addUser(userData);
+    const newUser = await db.addUser(userData);
     res.json({ success: true, user: { id: newUser.id, username: newUser.username, email: newUser.email } });
   } catch (error) {
-    res.status(500).json({ error: '注册失败' });
+    console.error('注册错误:', error);
+    res.status(500).json({ success: false, error: '注册失败' });
   }
 });
 
 // 用户登录
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    const user = db.findUser({ username, email: username });
+    const user = await db.findUser({ username, email: username });
     if (user && user.password === password) {
       res.json({ success: true, user: { id: user.id, username: user.username, email: user.email } });
     } else {
-      res.status(401).json({ error: '用户名或密码错误' });
+      res.status(401).json({ success: false, error: '用户名或密码错误' });
     }
   } catch (error) {
-    res.status(500).json({ error: '登录失败' });
+    console.error('登录错误:', error);
+    res.status(500).json({ success: false, error: '登录失败' });
   }
 });
 
