@@ -2,6 +2,24 @@
   publish = "public"
 
 [[redirects]]
+  from = "/api/auth/*"
+  to = "/.netlify/functions/auth"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/users/*"
+  to = "/.netlify/functions/users"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/records"
+  to = "/.netlify/functions/records"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
