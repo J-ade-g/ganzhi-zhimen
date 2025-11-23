@@ -1,5 +1,5 @@
-// Vercel Serverless Function for Authentication
-const db = require('../database');
+// Netlify Function for Authentication
+const db = require('../../database');
 
 module.exports = async (req, res) => {
     // 设置CORS
