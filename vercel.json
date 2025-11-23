@@ -28,6 +28,10 @@
       "dest": "/api/records.js"
     },
     {
+      "src": "/api/admin/(users|records|stats)",
+      "dest": "/api/admin.js"
+    },
+    {
       "src": "/admin.html",
       "dest": "/admin.html"
     },

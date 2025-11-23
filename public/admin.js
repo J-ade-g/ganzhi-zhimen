@@ -12,56 +12,25 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载所有数据
 async function loadAllData() {
     try {
-        // 从localStorage收集所有用户数据
-        const allStorageUsers = [];
-        const allStorageRecords = [];
-        
-        // 收集当前用户
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-        if (currentUser) {
-            // 获取该用户的资料
-            const userProfile = localStorage.getItem(`userProfile_${currentUser.id}`);
-            if (userProfile) {
-                const profile = JSON.parse(userProfile);
-                allStorageUsers.push({ 
-                    ...currentUser, 
-                    profile: profile,
-                    age: profile.age,
-                    gender: profile.gender,
-                    location: profile.location,
-                    greenLevel: profile.greenLevel,
-                    interests: profile.interests || []
-                });
-            } else {
-                allStorageUsers.push(currentUser);
-            }
-        }
-        
-        // 收集所有用户记录
-        const userRecords = JSON.parse(localStorage.getItem('userRecords') || '[]');
-        allStorageRecords.push(...userRecords);
-        
-        // 尝试从API获取数据
+        // 尝试从MongoDB API获取数据
         try {
             const usersResponse = await fetch('/api/admin/users');
             if (usersResponse.ok) {
-                const apiUsers = await usersResponse.json();
-                allUsers = apiUsers.length > 0 ? apiUsers : allStorageUsers;
-            } else {
-                allUsers = allStorageUsers;
+                const data = await usersResponse.json();
+                allUsers = data.users || [];
+                console.log('从MongoDB加载用户数据:', allUsers.length);
             }
             
             const recordsResponse = await fetch('/api/admin/records');
             if (recordsResponse.ok) {
-                const apiRecords = await recordsResponse.json();
-                allRecords = apiRecords.length > 0 ? apiRecords : allStorageRecords;
-            } else {
-                allRecords = allStorageRecords;
+                const data = await recordsResponse.json();
+                allRecords = data.records || [];
+                console.log('从MongoDB加载记录数据:', allRecords.length);
             }
         } catch (apiError) {
-            console.log('API不可用，使用本地数据');
-            allUsers = allStorageUsers;
-            allRecords = allStorageRecords;
+            console.error('API加载失败:', apiError);
+            allUsers = [];
+            allRecords = [];
         }
         
         console.log('加载数据完成:', { users: allUsers.length, records: allRecords.length });
