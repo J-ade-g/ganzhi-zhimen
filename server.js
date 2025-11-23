@@ -1,3 +1,4 @@
+// 感知之门服务器 - Railway部署版本
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
