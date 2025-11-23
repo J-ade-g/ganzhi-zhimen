@@ -1,4 +1,6 @@
 // Vercel Serverless Function for User Profile
+const db = require('../database-mongodb');
+
 module.exports = async (req, res) => {
     // 设置CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -17,12 +19,27 @@ module.exports = async (req, res) => {
         if (method === 'POST') {
             // 保存用户资料
             const profileData = body;
+            const savedProfile = await db.saveProfile(profileData);
             
-            // 在Vercel环境中，我们只能返回成功，实际数据存储在前端localStorage
             res.status(200).json({ 
                 success: true, 
-                profile: profileData,
-                message: '资料已保存到本地存储'
+                profile: savedProfile
+            });
+            return;
+        }
+
+        if (method === 'GET') {
+            // 获取用户资料
+            const userId = req.query.userId;
+            if (!userId) {
+                res.status(400).json({ error: '缺少userId参数' });
+                return;
+            }
+            
+            const profile = await db.getProfile(userId);
+            res.status(200).json({ 
+                success: true, 
+                profile: profile || null
             });
             return;
         }

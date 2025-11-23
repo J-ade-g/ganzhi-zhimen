@@ -1,4 +1,6 @@
 // Vercel Serverless Function for Records
+const db = require('../database-mongodb');
+
 module.exports = async (req, res) => {
     // 设置CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -20,10 +22,27 @@ module.exports = async (req, res) => {
             recordData.id = Date.now().toString();
             recordData.createdAt = new Date().toISOString();
             
+            const savedRecord = await db.addRecord(recordData);
+            
             res.status(200).json({ 
                 success: true, 
-                record: recordData,
-                message: '记录已保存到本地存储'
+                record: savedRecord
+            });
+            return;
+        }
+
+        if (method === 'GET') {
+            // 获取记录
+            const userId = req.query.userId;
+            if (!userId) {
+                res.status(400).json({ error: '缺少userId参数' });
+                return;
+            }
+            
+            const records = await db.getRecordsByUser(userId);
+            res.status(200).json({ 
+                success: true, 
+                records: records || []
             });
             return;
         }

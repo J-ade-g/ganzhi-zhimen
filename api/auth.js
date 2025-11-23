@@ -1,5 +1,5 @@
 // Vercel Serverless Function for Authentication
-const db = require('../database');
+const db = require('../database-mongodb');
 
 module.exports = async (req, res) => {
     // 设置CORS
@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
         if (path.includes('/login') && method === 'POST') {
             const { username, password } = body;
             
-            const user = db.findUser({ username, email: username });
+            const user = await db.findUser({ username, email: username });
             if (user && user.password === password) {
                 res.status(200).json({ 
                     success: true, 
@@ -41,13 +41,13 @@ module.exports = async (req, res) => {
         if (path.includes('/register') && method === 'POST') {
             const userData = body;
             
-            const existingUser = db.findUser({ username: userData.username, email: userData.email });
+            const existingUser = await db.findUser({ username: userData.username, email: userData.email });
             if (existingUser) {
                 res.status(400).json({ success: false, error: '用户名或邮箱已存在' });
                 return;
             }
             
-            const newUser = db.addUser(userData);
+            const newUser = await db.addUser(userData);
             res.status(200).json({ 
                 success: true, 
                 user: { 
