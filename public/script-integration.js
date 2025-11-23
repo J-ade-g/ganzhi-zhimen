@@ -41,6 +41,31 @@ document.addEventListener('DOMContentLoaded', function() {
             displayTasks(tasks);
         });
     }
+    
+    // 初始化任务显示 - 监听主应用显示
+    const checkAndInitTasks = function() {
+        const mainApp = document.getElementById('mainApp');
+        const container = document.getElementById('tasksContainer');
+        
+        if (mainApp && mainApp.style.display !== 'none' && container) {
+            // 检查是否需要重新生成任务
+            const needsUpdate = !container.innerHTML || 
+                               container.querySelector('.task-card') || 
+                               !container.querySelector('.task-option');
+            
+            if (needsUpdate && typeof getPersonalizedTasks === 'function') {
+                console.log('初始化任务显示...');
+                const tasks = getPersonalizedTasks();
+                displayTasks(tasks);
+            }
+        }
+    };
+    
+    // 定期检查并更新任务显示
+    setInterval(checkAndInitTasks, 1000);
+    
+    // 立即执行一次检查
+    setTimeout(checkAndInitTasks, 500);
 });
 
 // 显示任务列表
