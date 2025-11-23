@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #52b788;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40916c;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI功能测试页面</h1>
+    
+    <div class="test-section">
+        <h2>1. 环境检查</h2>
+        <button onclick="checkEnvironment()">检查环境配置</button>
+        <div id="envResult" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. API连接测试</h2>
+        <button onclick="testAPIConnection()">测试API连接</button>
+        <div id="apiResult" class="result" style="display:none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 简单对话测试</h2>
+        <input type="text" id="testMessage" placeholder="输入测试消息" style="width: 300px; padding: 8px;">
+        <button onclick="testChat()">发送测试</button>
+        <div id="chatResult" class="result" style="display:none;"></div>
+    </div>
+    
+    <script>
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = content;
+        }
+        
+        async function checkEnvironment() {
+            showResult('envResult', '检查中...', false);
+            
+            try {
+                const checks = {
+                    'AI助手脚本': typeof showAIChatInterface !== 'undefined',
+                    'chatWithAI函数': typeof chatWithAI !== 'undefined',
+                    'AI配置': typeof AI_CONFIG !== 'undefined'
+                };
+                
+                const result = Object.entries(checks)
+                    .map(([key, value]) => `${key}: ${value ? '✓' : '✗'}`)
+                    .join('\n');
+                
+                showResult('envResult', result, !Object.values(checks).every(v => v));
+            } catch (error) {
+                showResult('envResult', '错误: ' + error.message, true);
+            }
+        }
+        
+        async function testAPIConnection() {
+            showResult('apiResult', '测试中...', false);
+            
+            try {
+                const response = await fetch('/api/ai/qwen', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'qwen-turbo',
+                        input: {
+                            messages: [
+                                { role: 'user', content: '你好' }
+                            ]
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResult', 
+                        `✓ API连接成功！\n\n响应数据:\n${JSON.stringify(data, null, 2)}`, 
+                        false
+                    );
+                } else {
+                    showResult('apiResult', 
+                        `✗ API调用失败 (${response.status})\n\n错误信息:\n${JSON.stringify(data, null, 2)}`, 
+                        true
+                    );
+                }
+            } catch (error) {
+                showResult('apiResult', `✗ 网络错误:\n${error.message}`, true);
+            }
+        }
+        
+        async function testChat() {
+            const message = document.getElementById('testMessage').value || '你好';
+            showResult('chatResult', '发送中...', false);
+            
+            try {
+                if (typeof chatWithAI === 'undefined') {
+                    throw new Error('chatWithAI函数未定义，请确保ai-assistant.js已加载');
+                }
+                
+                const response = await chatWithAI(message);
+                showResult('chatResult', `✓ 对话成功！\n\nAI回复:\n${response}`, false);
+            } catch (error) {
+                showResult('chatResult', `✗ 对话失败:\n${error.message}\n\n${error.stack}`, true);
+            }
+        }
+    </script>
+    
+    <script src="ai-assistant.js"></script>
+</body>
+</html>

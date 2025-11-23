@@ -225,19 +225,40 @@ async function callZhipuAI(prompt, isChat) {
  * 调用通义千问
  */
 async function callQwenAI(prompt, isChat) {
-    const response = await fetch('/api/ai/qwen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: 'qwen-turbo',
-            input: {
-                messages: isChat ? prompt : [{ role: 'user', content: prompt }]
-            }
-        })
-    });
-    
-    const data = await response.json();
-    return data.output.text;
+    try {
+        const response = await fetch('/api/ai/qwen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen-turbo',
+                input: {
+                    messages: isChat ? prompt : [{ role: 'user', content: prompt }]
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API响应错误:', response.status, errorText);
+            throw new Error(`API调用失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('API返回数据:', data);
+        
+        // 检查返回数据结构
+        if (data.output && data.output.text) {
+            return data.output.text;
+        } else if (data.choices && data.choices[0]) {
+            return data.choices[0].message.content;
+        } else {
+            console.error('未知的返回数据格式:', data);
+            throw new Error('API返回数据格式错误');
+        }
+    } catch (error) {
+        console.error('调用通义千问失败:', error);
+        throw error;
+    }
 }
 
 /**
