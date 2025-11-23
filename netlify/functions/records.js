@@ -1,36 +1,43 @@
-// Vercel Serverless Function for Records
-module.exports = async (req, res) => {
-    // 设置CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+// Netlify Function for Records
+exports.handler = async (event, context) => {
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Content-Type': 'application/json'
+    };
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
     }
 
-    const { method, body } = req;
-
     try {
-        if (method === 'POST') {
-            // 保存记录
-            const recordData = body;
+        if (event.httpMethod === 'POST') {
+            const recordData = JSON.parse(event.body || '{}');
             recordData.id = Date.now().toString();
             recordData.createdAt = new Date().toISOString();
             
-            res.status(200).json({ 
-                success: true, 
-                record: recordData,
-                message: '记录已保存到本地存储'
-            });
-            return;
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ 
+                    success: true, 
+                    record: recordData,
+                    message: '记录已保存到本地存储'
+                })
+            };
         }
 
-        res.status(404).json({ error: 'Not found' });
+        return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ error: 'Not found' })
+        };
     } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: '服务器错误' });
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: '服务器错误: ' + error.message })
+        };
     }
 };

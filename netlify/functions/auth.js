@@ -1,67 +1,94 @@
 // Netlify Function for Authentication
 const db = require('../../database');
 
-module.exports = async (req, res) => {
-    // 设置CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+exports.handler = async (event, context) => {
+    // 设置CORS headers
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Content-Type': 'application/json'
+    };
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+    // 处理OPTIONS请求
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
     }
 
-    const { method, body } = req;
-    const path = req.url;
-
     try {
+        const body = JSON.parse(event.body || '{}');
+        const path = event.path;
+
         // 登录
-        if (path.includes('/login') && method === 'POST') {
+        if (path.includes('/login') || event.httpMethod === 'POST') {
             const { username, password } = body;
             
             const user = db.findUser({ username, email: username });
             if (user && user.password === password) {
-                res.status(200).json({ 
-                    success: true, 
-                    user: { 
-                        id: user.id, 
-                        username: user.username, 
-                        email: user.email 
-                    } 
-                });
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ 
+                        success: true, 
+                        user: { 
+                            id: user.id, 
+                            username: user.username, 
+                            email: user.email 
+                        } 
+                    })
+                };
             } else {
-                res.status(401).json({ success: false, error: '用户名或密码错误' });
+                return {
+                    statusCode: 401,
+                    headers,
+                    body: JSON.stringify({ success: false, error: '用户名或密码错误' })
+                };
             }
-            return;
         }
 
         // 注册
-        if (path.includes('/register') && method === 'POST') {
+        if (path.includes('/register')) {
             const userData = body;
             
             const existingUser = db.findUser({ username: userData.username, email: userData.email });
             if (existingUser) {
-                res.status(400).json({ success: false, error: '用户名或邮箱已存在' });
-                return;
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ success: false, error: '用户名或邮箱已存在' })
+                };
             }
             
             const newUser = db.addUser(userData);
-            res.status(200).json({ 
-                success: true, 
-                user: { 
-                    id: newUser.id, 
-                    username: newUser.username, 
-                    email: newUser.email 
-                } 
-            });
-            return;
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ 
+                    success: true, 
+                    user: { 
+                        id: newUser.id, 
+                        username: newUser.username, 
+                        email: newUser.email 
+                    } 
+                })
+            };
         }
 
-        res.status(404).json({ error: 'Not found' });
+        return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ error: 'Not found' })
+        };
     } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: '服务器错误' });
+        console.error('Function Error:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: '服务器错误: ' + error.message })
+        };
     }
 };
